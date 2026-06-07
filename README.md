@@ -50,6 +50,41 @@ Supported env vars:
 | `DEEPSEEK_API_KEY` | — | Fallback for DeepSeek |
 | `OPENAI_API_KEY` | — | Fallback for OpenAI |
 
+## Auto-fix on command failure
+
+After any failed command (e.g. `conda list env` with an error), friendly-bash asks:
+
+```
+🤔 Fix failed command? (rc=1) [Y/n]
+```
+
+Press `Y` to get an LLM-suggested fix.
+
+To disable, add to `.bashrc` before `# friendly-bash`:
+
+```bash
+export FRIENDLY_BASH_DISABLE_AUTO_FIX=1
+```
+
+```
+🤔 Fix failed command? (rc=1) [Y/n]
+```
+
+Press `Y` to get an LLM-suggested fix.
+
+## Switching back to free model
+
+To go back to the default free model:
+
+```bash
+unset FRIENDLY_BASH_MODEL
+unset FRIENDLY_BASH_API_KEY
+friendly-bash install
+source ~/.bashrc
+```
+
+No API key needed — uses `opencode/deepseek-v4-flash-free`.
+
 ## Commands
 
 | Command | Description |
@@ -63,9 +98,12 @@ Supported env vars:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FRIENDLY_BASH_MODEL` | `opencode/deepseek-v4-flash-free` | Model name (prefix `opencode/` for opencode) |
-| `FRIENDLY_BASH_API_KEY` | — | API key (only needed for non-opencode models) |
-| `FRIENDLY_BASH_API_URL` | `https://api.deepseek.com` | API base URL (for non-opencode models) |
+| `FRIENDLY_BASH_MODEL` | `opencode/deepseek-v4-flash-free` | Model name |
+| `FRIENDLY_BASH_API_KEY` | — | API key (skips opencode, uses direct API) |
+| `FRIENDLY_BASH_API_URL` | `https://api.deepseek.com` | API base URL |
+| `FRIENDLY_BASH_DISABLE_AUTO_FIX` | — | Set to `1` to disable auto-fix on command failure |
+| `DEEPSEEK_API_KEY` | — | Fallback API key |
+| `OPENAI_API_KEY` | — | Fallback API key |
 
 ## Development
 
