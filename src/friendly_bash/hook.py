@@ -13,11 +13,12 @@ from .llm import suggest_command
 _TOGGLE_HOOK = '''\
 # friendly-bash: toggle on/off (Ctrl+A)
 fb_toggle() {
-    if [ -f /tmp/fb_disabled ]; then
-        rm -f /tmp/fb_disabled
+    local f="$HOME/.friendly-bash/disabled"
+    if [ -f "$f" ]; then
+        rm -f "$f"
         echo "friendly-bash: ENABLED"
     else
-        touch /tmp/fb_disabled
+        touch "$f"
         echo "friendly-bash: DISABLED"
     fi
 }
@@ -27,7 +28,7 @@ case "$-" in *i*) bind -x '"\C-a":"fb_toggle"' 2>/dev/null || bind '"\C-a":"\r f
 _CNF_HOOK = '''\
 # friendly-bash: command not found handler
 command_not_found_handle() {
-    [ -f /tmp/fb_disabled ] && echo "$1: command not found" >&2 && return 127
+    [ -f "$HOME/.friendly-bash/disabled" ] && echo "$1: command not found" >&2 && return 127
     echo "[*] friendly-bash is thinking..."
     local result
     result=$(friendly-bash fix "$@")
@@ -46,7 +47,7 @@ _AUTO_FIX_HOOK = '''\
 friendly_bash_fix_last() {
     local rc=$?
     [ -f /tmp/fb_cooldown ] && return
-    [ -f /tmp/fb_disabled ] && return
+    [ -f "$HOME/.friendly-bash/disabled" ] && return
     local cmd
     cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9*]* *//')
     case "$cmd" in friendly-bash*|fb_*|history*|sleep*|source*|.*|cd*|ls*|echo*|export*|unset*|which*|type*|command*|__conda*|eval*|PS1=*) return;; esac
@@ -83,6 +84,7 @@ SOURCE_LINE = '\n[ -f ~/.friendly-bash/init.sh ] && source ~/.friendly-bash/init
 
 def _ensure_dirs():
     FB_DIR.mkdir(parents=True, exist_ok=True)
+    (FB_DIR / "disabled").touch()
     project_dir = FB_DIR / "project"
     project_dir.mkdir(parents=True, exist_ok=True)
     if not (project_dir / ".git").exists():
@@ -137,7 +139,8 @@ def uninstall_hook(shell: str = "auto"):
     text = text.strip() + "\n"
     rc_file.write_text(text)
 
-    if INIT_FILE.exists():
-        INIT_FILE.unlink()
+    if FB_DIR.exists():
+        import shutil
+        shutil.rmtree(FB_DIR)
 
     print(f"Uninstalled friendly-bash hook from {rc_file}")
