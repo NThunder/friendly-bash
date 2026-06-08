@@ -10,6 +10,8 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="friendly_bash"
 
 from .llm import suggest_command
 
+_CONFIG_LINE = '[ -f ~/.friendly-bash/config.sh ] && source ~/.friendly-bash/config.sh\n'
+
 _TOGGLE_HOOK = '''\
 # friendly-bash: toggle on/off (Ctrl+A)
 fb_toggle() {
@@ -76,7 +78,7 @@ if [ -z "${FRIENDLY_BASH_DISABLE_AUTO_FIX-}" ]; then
 fi
 '''
 
-INIT_SH = _TOGGLE_HOOK + _CNF_HOOK + _AUTO_FIX_HOOK
+INIT_SH = _CONFIG_LINE + _TOGGLE_HOOK + _CNF_HOOK + _AUTO_FIX_HOOK
 FB_DIR = Path.home() / ".friendly-bash"
 INIT_FILE = FB_DIR / "init.sh"
 SOURCE_LINE = '\n[ -f ~/.friendly-bash/init.sh ] && source ~/.friendly-bash/init.sh\n'

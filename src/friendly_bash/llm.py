@@ -1,9 +1,8 @@
 import os
 import subprocess
 
-DEFAULT_API_KEY = "sk-ffzF4aNCekEoBjaErm9CTWyEaiDTdNMP"
-DEFAULT_API_URL = "https://routerai.ru/api/v1"
-DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
+DEFAULT_API_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL = "openai/gpt-oss-20b:free"
 
 
 def resolve_model() -> str:
@@ -79,7 +78,7 @@ def _suggest_via_api(prompt: str, model: str) -> str | None:
         os.environ.get("FRIENDLY_BASH_API_KEY")
         or os.environ.get("DEEPSEEK_API_KEY")
         or os.environ.get("OPENAI_API_KEY")
-        or DEFAULT_API_KEY
+        or ""
     )
     base_url = os.environ.get("FRIENDLY_BASH_API_URL", DEFAULT_API_URL)
 

@@ -101,7 +101,8 @@ def _parse_shell_flag() -> str:
 
 
 def _run_natural(text: str):
-    from .llm import DEFAULT_OPENCODE_MODEL
+    from .llm import DEFAULT_MODEL, DEFAULT_API_URL
+    from openai import OpenAI
 
     prompt = (
         "You are a bash translator. Convert the following user request "
@@ -110,10 +111,12 @@ def _run_natural(text: str):
         f"Request: {text}"
     )
 
-    model = os.environ.get("FRIENDLY_BASH_MODEL") or os.environ.get("OPENCODE_MODEL") or DEFAULT_OPENCODE_MODEL
+    model = os.environ.get("FRIENDLY_BASH_MODEL", DEFAULT_MODEL)
+    api_key = os.environ.get("FRIENDLY_BASH_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY") or ""
+    base_url = os.environ.get("FRIENDLY_BASH_API_URL", DEFAULT_API_URL)
 
     t0 = time.perf_counter()
-    if model.startswith("opencode/"):
+    if model.startswith("opencode/") and not api_key:
         result = subprocess.run(
             ["opencode", "run", "-m", model],
             input=prompt, capture_output=True, text=True, timeout=60,
@@ -123,12 +126,7 @@ def _run_natural(text: str):
             sys.exit(1)
         command = result.stdout.strip()
     else:
-        from openai import OpenAI
-        api_key = os.environ.get("FRIENDLY_BASH_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            print("No API key set for direct API mode", file=sys.stderr)
-            sys.exit(1)
-        client = OpenAI(api_key=api_key, base_url=os.environ.get("FRIENDLY_BASH_API_URL", "https://api.deepseek.com"))
+        client = OpenAI(api_key=api_key, base_url=base_url)
         resp = client.chat.completions.create(
             model=model, messages=[{"role": "user", "content": prompt}],
             temperature=0.1, max_tokens=1000,
