@@ -68,15 +68,22 @@ command_not_found_handle() {
 _AUTO_FIX_HOOK = '''\
 # friendly-bash: auto-fix on command failure
 friendly_bash_fix_last() {
-    [ -f /tmp/fb_disabled ] && return
     local rc=$?
+    [ -f /tmp/fb_cooldown ] && return
+    [ -f /tmp/fb_disabled ] && return
     local cmd
     cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9*]* *//')
     case "$cmd" in friendly-bash*|fb_*|history*|sleep*|source*|.*|cd*|ls*|echo*|export*|unset*|which*|type*|command*|__conda*|eval*|PS1=*) return;; esac
     if [ $rc -ne 0 ] && [ -n "$cmd" ]; then
+        touch /tmp/fb_cooldown
+        (sleep 2; rm -f /tmp/fb_cooldown) &
         echo "🤔 Fix failed command? (rc=$rc) [Y/n] "
         read -r
         if [[ $REPLY =~ ^[Yy]?$ ]]; then
+            local error=""
+            case "$cmd" in rm*|mv*|cp*|dd*|mkfs*|format*|shutdown*|reboot*|poweroff*|kill*|pkill*) ;;
+                *) error=$(timeout 5 bash -c "$cmd" 2>&1 1>/dev/null || true) ;;
+            esac
             local result model
             model="${FRIENDLY_BASH_MODEL:-opencode/deepseek-v4-flash-free}"
             echo "🤔 friendly-bash is thinking..."
@@ -84,12 +91,11 @@ friendly_bash_fix_last() {
             t0=$(date +%s)
             if [ -n "${FRIENDLY_BASH_API_KEY-}" ]; then
                 model="${FRIENDLY_BASH_MODEL:-deepseek-chat}"
-                result=$(friendly-bash fix "$cmd" 2>/dev/null || echo "")
+                result=$(FRIENDLY_BASH_LAST_ERROR="$error" friendly-bash fix "$cmd" 2>/dev/null || echo "")
             else
-                result=$(opencode run --dir $HOME/.friendly-bash/project \
-                    -m "$model" \
-                    "The bash command failed with exit code $rc. Fix it. Suggest the corrected command in a CODE BLOCK. If it looks like a typo, fix it. Command: $cmd" \
-                    2>/dev/null)
+                local prompt="The bash command failed with exit code $rc. The user likely mistyped the command. Fix the SYNTAX, do NOT try to fix side-effect errors from the error output. Suggest the corrected command in a CODE BLOCK. Command: $cmd"
+                [ -n "$error" ] && prompt="$prompt"$'\nError output (for context only):\n'"$error"
+                result=$(opencode run --dir $HOME/.friendly-bash/project -m "$model" "$prompt" 2>/dev/null)
             fi
             t1=$(date +%s)
             if [ -n "$result" ]; then

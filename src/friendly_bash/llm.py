@@ -6,6 +6,8 @@ DEFAULT_OPENCODE_MODEL = "opencode/deepseek-v4-flash-free"
 
 
 def suggest_command(failed_cmd: str, args: list[str]) -> str | None:
+    last_error = os.environ.pop("FRIENDLY_BASH_LAST_ERROR", None) or ""
+
     prompt = (
         "You are a helpful shell assistant. "
         "The user typed a failed bash command. "
@@ -17,6 +19,8 @@ def suggest_command(failed_cmd: str, args: list[str]) -> str | None:
         "If suggesting a command, put it in a ```bash code block.\n\n"
         f"Failed command: {failed_cmd}"
     )
+    if last_error:
+        prompt += f"\nError output:\n{last_error}\n"
     if args:
         prompt += f"\nArguments: {' '.join(args)}"
 
