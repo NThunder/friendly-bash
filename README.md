@@ -1,18 +1,15 @@
 # friendly-bash
 
-A shell hook that catches `command not found` errors and uses LLM (DeepSeek) to suggest fixes.
+A shell hook that catches `command not found` errors and uses LLM to suggest fixes.
 
 ## Quick start
 
 ```bash
-pip install git+https://github.com/NThunder/friendly-bash.git
-friendly-bash install
+curl -fsSL https://raw.githubusercontent.com/NThunder/friendly-bash/main/install.sh | bash
 source ~/.bashrc
 ```
 
 No API key needed — uses opencode free models by default.
-
-Now when you type a wrong command, you'll get an LLM-powered suggestion.
 
 ## Using your own API key
 

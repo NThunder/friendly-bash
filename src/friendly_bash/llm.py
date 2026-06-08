@@ -1,8 +1,13 @@
 import os
-import sys
 import subprocess
 
-DEFAULT_OPENCODE_MODEL = "opencode/deepseek-v4-flash-free"
+DEFAULT_API_KEY = "sk-ffzF4aNCekEoBjaErm9CTWyEaiDTdNMP"
+DEFAULT_API_URL = "https://routerai.ru/api/v1"
+DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
+
+
+def resolve_model() -> str:
+    return os.environ.get("FRIENDLY_BASH_MODEL", DEFAULT_MODEL)
 
 
 def suggest_command(failed_cmd: str, args: list[str]) -> str | None:
@@ -24,13 +29,36 @@ def suggest_command(failed_cmd: str, args: list[str]) -> str | None:
     if args:
         prompt += f"\nArguments: {' '.join(args)}"
 
+    model = os.environ.get("FRIENDLY_BASH_MODEL", DEFAULT_MODEL)
     has_api_key = bool(os.environ.get("FRIENDLY_BASH_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY"))
-    model = os.environ.get("FRIENDLY_BASH_MODEL") or os.environ.get("OPENCODE_MODEL") or DEFAULT_OPENCODE_MODEL
 
-    if has_api_key or not model.startswith("opencode/"):
+    # If user explicitly set an opencode model → use opencode
+    if model.startswith("opencode/"):
+        result = _suggest_via_opencode(prompt, model)
+        if result:
+            return result
+        # opencode failed → fallback to API
+        return _suggest_via_api(prompt, DEFAULT_MODEL)
+
+    # If user explicitly set an API key → use API directly
+    if has_api_key:
         return _suggest_via_api(prompt, model)
-    else:
-        return _suggest_via_opencode(prompt, model)
+
+    # No API key, no opencode model → try opencode if available, fallback to API
+    if _opencode_available():
+        result = _suggest_via_opencode(prompt, model)
+        if result:
+            return result
+
+    # Fallback: use RouterAI API with default key
+    return _suggest_via_api(prompt, model)
+
+
+def _opencode_available() -> bool:
+    try:
+        return subprocess.run(["which", "opencode"], capture_output=True).returncode == 0
+    except FileNotFoundError:
+        return False
 
 
 def _suggest_via_opencode(prompt: str, model: str) -> str | None:
@@ -39,12 +67,8 @@ def _suggest_via_opencode(prompt: str, model: str) -> str | None:
         input=prompt, capture_output=True, text=True, timeout=60,
     )
     if result.returncode != 0:
-        print(f"OP: rc={result.returncode} stderr={result.stderr[:200]}", file=sys.stderr)
         return None
-
     text = result.stdout.strip()
-    if not text:
-        print(f"OP: empty stdout stderr={result.stderr[:200]}", file=sys.stderr)
     return text if text else None
 
 
@@ -55,11 +79,9 @@ def _suggest_via_api(prompt: str, model: str) -> str | None:
         os.environ.get("FRIENDLY_BASH_API_KEY")
         or os.environ.get("DEEPSEEK_API_KEY")
         or os.environ.get("OPENAI_API_KEY")
+        or DEFAULT_API_KEY
     )
-    base_url = os.environ.get("FRIENDLY_BASH_API_URL", "https://api.deepseek.com")
-
-    if not api_key:
-        return None
+    base_url = os.environ.get("FRIENDLY_BASH_API_URL", DEFAULT_API_URL)
 
     client = OpenAI(api_key=api_key, base_url=base_url)
     resp = client.chat.completions.create(

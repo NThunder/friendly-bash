@@ -8,7 +8,7 @@ import re
 import time
 
 from .hook import install_hook, uninstall_hook
-from .llm import suggest_command
+from .llm import suggest_command, resolve_model
 
 
 def main():
@@ -63,7 +63,8 @@ def main():
             print(f"[{elapsed:.1f}s]", file=sys.stderr)
             print(suggestion, file=sys.stderr)
             sys.exit(1)
-        print(f"[{elapsed:.1f}s]", file=sys.stderr)
+        model = resolve_model()
+        print(f"[{elapsed:.1f}s | {model}]", file=sys.stderr)
         print(suggestion, file=sys.stderr)
         print(extracted)
 
