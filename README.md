@@ -17,25 +17,23 @@ source ~/.bashrc
 **After install, friendly-bash is disabled by default.**  
 Press **Ctrl+A** to activate it — then try `show disk space`.
 
-> ⚠️ **Default account has daily limits (~50 requests/day on free models).**  
-> For unlimited usage, get your own free API key (see below).
+> ⚠️ **No built-in API key.** You need to get your own (free) key before using.
 
-## Get your own free API key
+## Get a free API key
 
 1. Register at [openrouter.ai/keys](https://openrouter.ai/keys) (free, via GitHub/Google)
 2. Click **Create Key**, copy the key starting with `sk-or-v1-`
 3. Set it up:
 
 ```bash
-export OPENROUTER_API_KEY="sk-or-v1-..."
-export FRIENDLY_BASH_API_KEY="$OPENROUTER_API_KEY"
+export FRIENDLY_BASH_API_KEY="sk-or-v1-..."
 export FRIENDLY_BASH_API_URL="https://openrouter.ai/api/v1"
 export FRIENDLY_BASH_MODEL="openai/gpt-oss-20b:free"
 friendly-bash install
 source ~/.bashrc
 ```
 
-You can also use any other provider (OpenAI, DeepSeek, RouterAI, etc.):
+Or use any other provider (OpenAI, DeepSeek, RouterAI, etc.):
 
 ```bash
 export FRIENDLY_BASH_API_KEY="sk-..."
@@ -65,7 +63,7 @@ source ~/.bashrc
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FRIENDLY_BASH_API_KEY` | built-in OpenRouter key | API key (rate-limited, ~50 req/day) |
+| `FRIENDLY_BASH_API_KEY` | — | Required. Get one at openrouter.ai/keys |
 | `FRIENDLY_BASH_API_URL` | `https://openrouter.ai/api/v1` | API base URL |
 | `FRIENDLY_BASH_MODEL` | `openai/gpt-oss-20b:free` | Model name |
 | `FRIENDLY_BASH_DISABLE_AUTO_FIX` | — | Set to `1` to disable auto-fix on errors |
