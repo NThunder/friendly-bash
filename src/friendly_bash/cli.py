@@ -6,6 +6,7 @@ import subprocess
 import shlex
 import re
 import time
+from pathlib import Path
 
 from .hook import install_hook, uninstall_hook
 from .llm import suggest_command, resolve_model
@@ -17,6 +18,7 @@ def main():
         print("Commands:")
         print("  suggest <cmd> [args...]   Suggest a fix for a failed command")
         print("  fix <cmd> [args...]       Suggest a fix and output the command to run")
+        print("  config <key|url|model>    Set API key, URL, or model")
         print("  install [--shell=]        Install shell hook")
         print("  uninstall [--shell=]      Uninstall shell hook")
         print("  run <natural language>    Run a command in natural language")
@@ -74,6 +76,9 @@ def main():
             sys.exit(1)
         _run_natural(" ".join(sys.argv[2:]))
 
+    elif cmd == "config":
+        _cmd_config()
+
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)
@@ -91,6 +96,55 @@ def _extract_command(suggestion: str) -> str | None:
         if line and not line.startswith('#'):
             return line
     return None
+
+
+def _cmd_config():
+    config_dir = Path.home() / ".friendly-bash"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / "config.sh"
+
+    # Read existing config
+    current = {}
+    if config_file.exists():
+        for line in config_file.read_text().splitlines():
+            if line.startswith("export "):
+                parts = line[7:].split("=", 1)
+                if len(parts) == 2:
+                    key = parts[0]
+                    val = parts[1].strip('"')
+                    current[key] = val
+
+    if len(sys.argv) < 3:
+        print("Usage: friendly-bash config <key|url|model> <value>")
+        print("  friendly-bash config key sk-...")
+        print("  friendly-bash config url https://...")
+        print("  friendly-bash config model gpt-4o")
+        print("")
+        print("Current config:")
+        for k, v in current.items():
+            print(f"  {k}={v}")
+        sys.exit(1)
+
+    param = sys.argv[2]
+    if param not in ("key", "url", "model"):
+        print(f"Unknown config: {param}. Use: key, url, model")
+        sys.exit(1)
+
+    if len(sys.argv) < 4:
+        print(f"Usage: friendly-bash config {param} <value>")
+        sys.exit(1)
+
+    value = sys.argv[3]
+    env_map = {"key": "FRIENDLY_BASH_API_KEY", "url": "FRIENDLY_BASH_API_URL", "model": "FRIENDLY_BASH_MODEL"}
+    current[env_map[param]] = value
+
+    with open(config_file, "w") as f:
+        for key in ("FRIENDLY_BASH_API_KEY", "FRIENDLY_BASH_API_URL", "FRIENDLY_BASH_MODEL"):
+            val = current.get(key)
+            if val:
+                f.write(f'export {key}="{val}"\n')
+
+    print(f"Saved {param} to {config_file}")
 
 
 def _parse_shell_flag() -> str:

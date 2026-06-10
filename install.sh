@@ -11,5 +11,18 @@ pip install $BP -q --no-build-isolation git+https://github.com/NThunder/friendly
 }
 
 friendly-bash install
+
+# Save API key for future sessions
+mkdir -p ~/.friendly-bash
+if [ -n "${FRIENDLY_BASH_API_KEY-}" ]; then
+    cat > ~/.friendly-bash/config.sh << CONFIGEOF
+export FRIENDLY_BASH_API_KEY="${FRIENDLY_BASH_API_KEY-}"
+export FRIENDLY_BASH_API_URL="${FRIENDLY_BASH_API_URL-https://openrouter.ai/api/v1}"
+export FRIENDLY_BASH_MODEL="${FRIENDLY_BASH_MODEL-openai/gpt-oss-20b:free}"
+CONFIGEOF
+    echo "API key saved to ~/.friendly-bash/config.sh"
+fi
+
 echo ""
 echo "Done! Run: source ~/.bashrc"
+echo "  (set your API key in ~/.friendly-bash/config.sh if not done yet)"

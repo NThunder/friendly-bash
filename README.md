@@ -10,36 +10,63 @@ A shell hook that catches **command-not-found** errors AND **run-time failures**
 ## Quick start
 
 ```bash
+# Install with your API key (recommended)
+export FRIENDLY_BASH_API_KEY="sk-..."
 curl -fsSL https://raw.githubusercontent.com/NThunder/friendly-bash/main/install.sh | bash
 source ~/.bashrc
 ```
 
-**After install, friendly-bash is disabled by default.**  
-Press **Ctrl+A** to activate it — then try `show disk space`.
+**The key is saved to `~/.friendly-bash/config.sh` and loaded automatically** in every new terminal. No need to set it again.
 
-> ⚠️ **No built-in API key.** You need to get your own (free) key before using.
+**friendly-bash starts disabled.**  
+Press **Ctrl+A** to enable it (you'll see `friendly-bash: ENABLED`). Then try `show disk space`.
 
-## Get a free API key
+## Getting an API key
 
-1. Register at [openrouter.ai/keys](https://openrouter.ai/keys) (free, via GitHub/Google)
-2. Click **Create Key**, copy the key starting with `sk-or-v1-`
-3. Set it up:
+<details>
+<summary>OpenRouter (free, with rate limits)</summary>
+
+1. Sign up at [openrouter.ai/keys](https://openrouter.ai/keys)
+2. Click **Create Key**
+3. Install with your key:
 
 ```bash
 export FRIENDLY_BASH_API_KEY="sk-or-v1-..."
-export FRIENDLY_BASH_API_URL="https://openrouter.ai/api/v1"
-export FRIENDLY_BASH_MODEL="openai/gpt-oss-20b:free"
-friendly-bash install
+curl -fsSL https://raw.githubusercontent.com/NThunder/friendly-bash/main/install.sh | bash
 source ~/.bashrc
 ```
 
-Or use any other provider (OpenAI, DeepSeek, RouterAI, etc.):
+</details>
+
+<details>
+<summary>RouterAI (stable, pay-as-you-go)</summary>
 
 ```bash
 export FRIENDLY_BASH_API_KEY="sk-..."
-export FRIENDLY_BASH_API_URL="https://api.openai.com/v1"
-export FRIENDLY_BASH_MODEL="gpt-4o"
-friendly-bash install
+export FRIENDLY_BASH_API_URL="https://routerai.ru/api/v1"
+export FRIENDLY_BASH_MODEL="deepseek/deepseek-v4-flash"
+curl -fsSL https://raw.githubusercontent.com/NThunder/friendly-bash/main/install.sh | bash
+source ~/.bashrc
+```
+
+</details>
+
+**If you install without a key** — set it up later:
+
+```bash
+# View current config
+friendly-bash config
+
+# Set API key
+friendly-bash config key "sk-..."
+source ~/.bashrc
+
+# Set API URL (optional, defaults to OpenRouter)
+friendly-bash config url "https://openrouter.ai/api/v1"
+source ~/.bashrc
+
+# Set model (optional, defaults to gpt-oss-20b:free)
+friendly-bash config model "openai/gpt-oss-20b:free"
 source ~/.bashrc
 ```
 
@@ -58,6 +85,7 @@ source ~/.bashrc
 | `friendly-bash install` | Install shell hook |
 | `friendly-bash uninstall` | Remove shell hook |
 | `friendly-bash fix <cmd>` | Ask LLM for a fix |
+| `friendly-bash config [key\|url\|model]` | View or change API key, URL, or model |
 
 ## Environment variables
 
