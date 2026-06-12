@@ -10,7 +10,10 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="friendly_bash"
 
 from .llm import suggest_command
 
-_CONFIG_LINE = '[ -f ~/.friendly-bash/config.sh ] && source ~/.friendly-bash/config.sh\n'
+_CONFIG_LINE = (
+    '[ -f ~/.friendly-bash/config.sh ] && source ~/.friendly-bash/config.sh\n'
+    'unset SSL_CERT_FILE 2>/dev/null || true\n'
+)
 
 _TOGGLE_HOOK = '''\
 # friendly-bash: toggle on/off (Ctrl+A)
@@ -53,19 +56,23 @@ friendly_bash_fix_last() {
     local cmd
     cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9*]* *//')
     case "$cmd" in friendly-bash*|fb_*|history*|sleep*|source*|.*|cd*|ls*|echo*|export*|unset*|which*|type*|command*|__conda*|eval*|PS1=*) return;; esac
-    if [ $rc -eq 1 ] && [ -n "$cmd" ]; then
+    if [ $rc -gt 0 ] && [ $rc -lt 128 ] && [ -n "$cmd" ]; then
         touch /tmp/fb_cooldown
         (sleep 2; rm -f /tmp/fb_cooldown) &>/dev/null & disown
         echo "[!] Fix failed command? (rc=$rc) [Y/n] "
         read -r
         if [[ $REPLY =~ ^[Yy]?$ ]]; then
-            local error=""
+            local error="" help_text=""
+            local cmd_name="${cmd%% *}"
             case "$cmd" in rm*|mv*|cp*|dd*|mkfs*|format*|shutdown*|reboot*|poweroff*|kill*|pkill*) ;;
                 *) error=$(timeout 5 bash -c "$cmd" 2>&1 1>/dev/null || true) ;;
             esac
+            if command -v "$cmd_name" &>/dev/null && [[ "$cmd" != "$cmd_name" ]]; then
+                help_text=$(timeout 3 bash -c "$cmd_name --help 2>&1 || $cmd_name -h 2>&1" 2>/dev/null || true)
+            fi
             echo "[*] friendly-bash is thinking..."
             local result
-            result=$(FRIENDLY_BASH_LAST_ERROR="$error" friendly-bash fix "$cmd" || echo "")
+            result=$(FRIENDLY_BASH_LAST_ERROR="$error" FRIENDLY_BASH_HELP="$help_text" friendly-bash fix "$cmd" || echo "")
             if [ -n "$result" ]; then
                 read -r -p "Execute? [Y/n] " && [[ $REPLY =~ ^[Yyn]?$ ]] && eval "$result"
             fi

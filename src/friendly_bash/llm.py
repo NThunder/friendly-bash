@@ -11,6 +11,7 @@ def resolve_model() -> str:
 
 def suggest_command(failed_cmd: str, args: list[str]) -> str | None:
     last_error = os.environ.pop("FRIENDLY_BASH_LAST_ERROR", None) or ""
+    help_text = os.environ.pop("FRIENDLY_BASH_HELP", None) or ""
 
     prompt = (
         "You are a helpful shell assistant. "
@@ -25,6 +26,8 @@ def suggest_command(failed_cmd: str, args: list[str]) -> str | None:
     )
     if last_error:
         prompt += f"\nError output:\n{last_error}\n"
+    if help_text:
+        prompt += f"\nCommand help:\n{help_text}\n"
     if args:
         prompt += f"\nArguments: {' '.join(args)}"
 
